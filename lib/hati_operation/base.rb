@@ -60,12 +60,14 @@ module HatiOperation
     end
 
     # unpack result
-    # TODO: Add specific error
-    def step(result)
-      raise 'Invalid Result type' unless result.is_a?(HatiCommand::Result)
-      return Failure!(result) if result.failure?
+    def step(result = nil, err: nil, &block)
+      if result.is_a?(HatiCommand::Result)
+        return result.failure? ? Failure!(result) : result.value
+      end
 
-      result.value
+      block.call
+    rescue StandardError => e
+      err ? Failure!(e, err: e) : Failure!(e)
     end
   end
 end
