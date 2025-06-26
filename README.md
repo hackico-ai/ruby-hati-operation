@@ -28,15 +28,27 @@ bundle install
 Here is a simple example of how to use HatiOperation:
 
 ```ruby
-class MyOperation < HatiOperation::Base
+class MyApiOperation < HatiOperation::Base
+  operation do
+    unexpected_err JsonApiErrors::UnexpectredError
+    ar_transaction :funds_transfer
+  end
+
   step user_account: AccountService
   step broadcast: BroadcastService
 
   def call(params)
-    account = step user_account.call(params[:account_id])
-    transfer = step withdrawal(account)
+    transfer = step withdaral(account)
     broadcast.call(transfer)
+
     account
+  end
+
+  def funds_transfer(account)
+    account = step user_account.call(params[:account_id])
+    withdrawal = step WithdrawalService.call(account)
+    transfer = ProcessTransferService.call(withdrawal)
+    Success(transfer)
   end
 end
 ```
