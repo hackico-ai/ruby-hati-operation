@@ -25,29 +25,32 @@ bundle install
 
 ## Usage
 
-Here is a simple example of how to use HatiOperation:
+Here is a simple example of how to use HatiOperation in api development:
 
 ```ruby
 class MyApiOperation < HatiOperation::Base
   operation do
-    unexpected_err JsonApiErrors::UnexpectredError
+    unexpected_err ApiErr.cal(500)
     ar_transaction :funds_transfer
   end
 
   step user_account: AccountService
   step broadcast: BroadcastService
+  step withdrawal: WithdrawalService
+  step transfer: ProcessTransferService
 
   def call(params)
-    transfer = step withdaral(account)
-    broadcast.call(transfer)
+    transfer = step funds_transfer(params[:account_id])
+    broadcast.call(transfer.to_event)
 
     account
   end
 
-  def funds_transfer(account)
-    account = step user_account.call(params[:account_id])
-    withdrawal = step WithdrawalService.call(account)
-    transfer = ProcessTransferService.call(withdrawal)
+  def funds_transfer_transaction(acc_id)
+    acc = step user_account.call(acc_id), err: ApiErr.cal(404)
+    withdrawal = step withdrawal.call(acc), err: ApiErr.cal(409)
+    transfer = transfer.call(withdrawal), err: ApiErr.cal(503)
+
     Success(transfer)
   end
 end
