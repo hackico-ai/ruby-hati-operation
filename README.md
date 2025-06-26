@@ -34,25 +34,38 @@ class MyApiOperation < HatiOperation::Base
     ar_transaction :funds_transfer
   end
 
+  step validation: MyApiContract
   step user_account: AccountService
   step broadcast: BroadcastService
   step withdrawal: WithdrawalService
   step transfer: ProcessTransferService
+  step serializer: MyApiSerializer
 
-  def call(params)
-    transfer = step funds_transfer(params[:account_id])
+  def call(raw_params)
+    params = validation.call(validation), err: ApiErr.cal(422)
+    transfer = step funds_transfer_transaction(params[:account_id])
     broadcast.call(transfer.to_event)
 
-    account
+    serializer.call(transfer.meta)
   end
 
   def funds_transfer_transaction(acc_id)
     acc = step user_account.call(acc_id), err: ApiErr.cal(404)
     withdrawal = step withdrawal.call(acc), err: ApiErr.cal(409)
-    transfer = transfer.call(withdrawal), err: ApiErr.cal(503)
+    transfer = step transfer.call(withdrawal), err: ApiErr.cal(503)
 
     Success(transfer)
   end
+end
+
+# e.g. Rails API  Controller
+MyApiOperation.call(unsafe_params)
+
+# e.g. V2 Rails API Controller -> Using Dependency Injection (DI)
+MyApiOperation.call(unsafe_params) do
+  step broadcast: API::V2::BroadcastService
+  step transfer:  API::V2::PaymentProcessorService
+  step serializer: API::V2::MyApiSerializer
 end
 ```
 
