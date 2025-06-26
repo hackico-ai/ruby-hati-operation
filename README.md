@@ -35,7 +35,6 @@ class MyApiOperation < HatiOperation::Base
   end
 
   step validation: MyApiContract
-  step user_account: AccountService
   step broadcast: BroadcastService
   step withdrawal: WithdrawalService
   step transfer: ProcessTransferService
@@ -50,11 +49,17 @@ class MyApiOperation < HatiOperation::Base
   end
 
   def funds_transfer_transaction(acc_id)
-    acc = step user_account.call(acc_id), err: ApiErr.cal(404)
+    acc = find_acc!(acc_id)
     withdrawal = step withdrawal.call(acc), err: ApiErr.cal(409)
     transfer = step transfer.call(withdrawal), err: ApiErr.cal(503)
 
     Success(transfer)
+  end
+
+  # NOTE: also supports block evaluetion
+  # same as: step { Account.find(acc_id) }, err: ApiErr.cal(404)
+  def find_acc!
+    Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.cal(404))
   end
 end
 

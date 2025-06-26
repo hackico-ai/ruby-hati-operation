@@ -31,12 +31,17 @@ RSpec.describe HatiOperation::Base do
         expect(operation.step(valid_result)).to eq('Valid Result')
       end
 
-      it 'raises an error when given an invalid result type' do
-        expect { operation.step(invalid_result) }.to raise_error('Invalid Result type')
+      context 'when block given' do
+        it 'evaluetes block ' do
+          expect(operation.step { 1 }).to eq(1)
+        end
+
+        it 'wraps an error' do
+          expect { operation.step { raise 'Booom' } }.to raise_error(HatiCommand::Errors::FailFastError)
+        end
       end
     end
 
-    # FIX ERROR
     describe '#step_configs' do
       it 'returns an empty hash when no configurations are set' do
         expect(operation.step_configs).to eq({})
