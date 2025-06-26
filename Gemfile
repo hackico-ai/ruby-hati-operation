@@ -4,7 +4,6 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'hati-command', path: '../ruby-hati-command/'
 gem 'pry'
 gem 'rake'
 
