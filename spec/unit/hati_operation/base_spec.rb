@@ -20,7 +20,6 @@ RSpec.describe HatiOperation::Base do
     end
   end
 
-  # FIX ERROR
   # NOTE:  only for development and test
   context 'when private instance api' do
     let(:operation) { base_klass.send(:new) }

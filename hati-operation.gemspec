@@ -32,4 +32,7 @@ Gem::Specification.new do |spec|
   spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
 
   spec.metadata['rubygems_mfa_required'] = 'true'
+
+  # TODO: while in dev
+  # spec.add_dependency 'hati-command'
 end

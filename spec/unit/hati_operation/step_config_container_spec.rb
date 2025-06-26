@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'pry'
 
 RSpec.describe HatiOperation::StepConfigContainer do
   subject(:configuration) { described_class }
