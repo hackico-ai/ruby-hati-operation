@@ -41,7 +41,7 @@ class MyApiOperation < HatiOperation::Base
   step serializer: MyApiSerializer
 
   def call(raw_params)
-    params = validation.call(validation), err: ApiErr.cal(422)
+    params = step validation.call(validation), err: ApiErr.cal(422)
     transfer = step funds_transfer_transaction(params[:account_id])
     broadcast.call(transfer.to_event)
 
@@ -50,7 +50,8 @@ class MyApiOperation < HatiOperation::Base
 
   def funds_transfer_transaction(acc_id)
     acc = find_acc!(acc_id)
-    withdrawal = step withdrawal.call(acc), err: ApiErr.cal(409)
+    withdrawal = step err: ApiErr.cal(409)
+    withdrawal.call(acc),
     transfer = step transfer.call(withdrawal), err: ApiErr.cal(503)
 
     Success(transfer)
