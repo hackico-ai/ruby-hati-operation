@@ -30,7 +30,7 @@ Here is a simple example of how to use HatiOperation in api development:
 ```ruby
 class MyApiOperation < HatiOperation::Base
   operation do
-    unexpected_err ApiErr.cal(500)
+    unexpected_err ApiErr.call(500)
     ar_transaction :funds_transfer
   end
 
@@ -41,7 +41,7 @@ class MyApiOperation < HatiOperation::Base
   step serializer: MyApiSerializer
 
   def call(raw_params)
-    params = step validation.call(validation), err: ApiErr.cal(422)
+    params = step validation.call(validation), err: ApiErr.call(422)
     transfer = step funds_transfer_transaction(params[:account_id])
     broadcast.call(transfer.to_event)
 
@@ -52,7 +52,7 @@ class MyApiOperation < HatiOperation::Base
     acc = find_acc!(acc_id)
     withdrawal = step err: ApiErr.cal(409)
     withdrawal.call(acc),
-    transfer = step transfer.call(withdrawal), err: ApiErr.cal(503)
+    transfer = step transfer.call(withdrawal), err: ApiErr.call(503)
 
     Success(transfer)
   end
@@ -60,18 +60,26 @@ class MyApiOperation < HatiOperation::Base
   # NOTE: also supports block evaluetion
   # same as: step { Account.find(acc_id) }, err: ApiErr.cal(404)
   def find_acc!
-    Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.cal(404))
+    Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.call(404))
   end
 end
 
 # e.g. Rails API  Controller
-MyApiOperation.call(unsafe_params)
+class Api::V1
+  def index
+    MyApiOperation.call(unsafe_params)
+  end
+end
 
 # e.g. V2 Rails API Controller -> Using Dependency Injection (DI)
-MyApiOperation.call(unsafe_params) do
-  step broadcast: API::V2::BroadcastService
-  step transfer:  API::V2::PaymentProcessorService
-  step serializer: API::V2::MyApiSerializer
+class Api::V2
+  def index
+    MyApiOperation.call(unsafe_params) do
+      step broadcast: API::V2::BroadcastService
+      step transfer: API::V2::PaymentProcessorService
+      step serializer: API::V2::MyApiSerializer
+    end
+  end
 end
 ```
 
