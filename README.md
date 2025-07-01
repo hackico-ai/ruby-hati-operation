@@ -58,10 +58,8 @@ class Withdrawal::Operation::Create < HatiOperation::Base
   end
 
   def funds_transfer_transaction(acc_id)
-    # NOTE: sane as Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.call(404))
     acc = step { Account.find(acc_id) }, err: ApiErr.cal(404)
-    withdrawal = step err: ApiErr.cal(409)
-    withdrawal.call(acc),
+    withdrawal = step withdrawal.call(acc), err: ApiErr.cal(409)
     transfer = step transfer.call(withdrawal), err: ApiErr.call(503)
     Success(transfer)
   end
