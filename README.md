@@ -31,7 +31,7 @@ Here is a simple example of how to use HatiOperation in rapid isolated Rails API
 
 ```ruby
 # Rails API controller
-class Api::V1::WithdrawalController
+class Api::V1::WithdrawalControlle < ApplicationController
   def create
     result = Withdrawal::Operation::Create.call(params.to_unsafe_h)
 
@@ -78,19 +78,24 @@ end
 ## Using Dependency Injection (DI)
 
 ```ruby
-class Api::V2::WithdrawalController
+# Rails API controller
+class Api::V2::WithdrawalController < ApplicationController
   def create
-    run_and_render Withdrawal::Operation::Create.call(params.to_unsafe_h), status: 201  do
+    run_and_render Withdrawal::Operation::Create.call(unsafe_params), status: 201  do
       step broadcast: API::V2::BroadcastService, err: SpecialNewApiError
       step transfer: API::V2::PaymentProcessorService
       step serializer: ExtendedTransferSerializer
 
       # if result re-mapping is needed
-      on_failure V2::API::Error
+      on_failure V2::API::ErrorMap
     end
   end
 
   private
+
+  def unsafe_params
+    params.to_unsafe_h
+  end
 
   def run_and_render(result, status: 200)
    rpepare_result = JsonResult.new(value, on_success: status)
@@ -134,17 +139,20 @@ end
 ## Here is more DSL-ish example of usage
 
 ```ruby
+class ApiController < ApplicationController
+  # ...
+  private
+
+  def run_and_render(operation, &block)
+   render JsonResult.prepare operation.call(params.to_unsafe_h).value
+  end
+end
+
+class Api::V2::WithdrawalController < ApiController
   def create
     run_and_render Withdrawal::Operation::Create
   end
-
-  private
-
-  def unsafe_params = params.to_unsafe_h
-
-  def run_and_render(operation, &block)
-   render JsonResult.prepare operation.call(unsafe_params).value
-  end
+end
 
 class Withdrawal::Operation::Create < ApiOperation
   on_call CreateContract, err: ApiErr.call(422)
@@ -167,6 +175,22 @@ class Withdrawal::Operation::Create < ApiOperation
     withdrawal = step withdrawal.call(acc)
     transfer = step transfer.call(withdrawal)
     Success(transfer)
+  end
+end
+```
+
+## Experimental: full speed DSL using contextual resul passing
+
+```ruby
+class Withdrawal::Operation::Create < ApiOperation
+  steps do
+    step contract: CreateContract
+    step withdrawal: WithdrawalService
+    step transfer: ProcessTransferService
+    step broadcast: BroadcastService
+
+    on_failure API::ErrorMap
+    on_success TransferSerializer, status: 201
   end
 end
 ```
