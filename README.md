@@ -25,10 +25,10 @@ bundle install
 
 ## Usage
 
-Here is a simple example of how to use HatiOperation in api development:
+Here is a simple example of how to use HatiOperation in rapid isolated api development:
 
 ```ruby
-class MyApiOperation < HatiOperation::Base
+class Withdrawal::Operation::Create < HatiOperation::Base
   operation do
     unexpected_err ApiErr.call(500)
     ar_transaction :funds_transfer
@@ -64,17 +64,16 @@ class MyApiOperation < HatiOperation::Base
   end
 end
 
-# e.g. Rails API  Controller
-class Api::V1
+class Api::V1::WithdrawalController
   def index
-    MyApiOperation.call(unsafe_params)
+    run_and_render Withdrawal::Operation::Create.call(unsafe_params)
   end
 end
 
-# e.g. V2 Rails API Controller -> Using Dependency Injection (DI)
-class Api::V2
+# e.g. Using Dependency Injection (DI)
+class Api::V2::WithdrawalController
   def index
-    MyApiOperation.call(unsafe_params) do
+    run_and_render Withdrawal::Operation::Create.call(unsafe_params) do
       step broadcast: API::V2::BroadcastService
       step transfer: API::V2::PaymentProcessorService
       step serializer: API::V2::MyApiSerializer
