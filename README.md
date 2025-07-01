@@ -41,17 +41,16 @@ class ApiOperation
 end
 
 class Withdrawal::Operation::Create < HatiOperation::Base
+  on_call CreateContract, err: ApiErr.call(422)
+  on_success TransferSerializer
+
   ar_transaction :funds_transfer
 
-  step validation: MyApiContract
   step broadcast: BroadcastService
   step withdrawal: WithdrawalService
   step transfer: ProcessTransferService
 
-  on_success MyApiSerializer
-
-  def call(raw_params)
-    params = step validation.call(validation), err: ApiErr.call(422)
+  def call(params:)
     transfer = step funds_transfer_transaction(params[:account_id])
     broadcast.call(transfer.to_event)
     transfer.meta
@@ -66,13 +65,13 @@ class Withdrawal::Operation::Create < HatiOperation::Base
 end
 ```
 
-### NOTE: Using Dependency Injection (DI)
+#### NOTE: Using Dependency Injection (DI)
 
 ```ruby
 class Api::V2::WithdrawalController
   def index
     run_and_render Withdrawal::Operation::Create.call(unsafe_params) do
-      step broadcast: API::V2::BroadcastService
+      step broadcast: API::V2::BroadcastService, err: SpecialNewApiError
       step transfer: API::V2::PaymentProcessorService
 
       on_success ApiErrMap
