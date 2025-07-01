@@ -34,49 +34,51 @@ class Api::V1::WithdrawalController
   end
 end
 
-class Withdrawal::Operation::Create < HatiOperation::Base
+class ApiOperation
   operation do
     unexpected_err ApiErr.call(500)
-    ar_transaction :funds_transfer
   end
+end
+
+class Withdrawal::Operation::Create < HatiOperation::Base
+  ar_transaction :funds_transfer
 
   step validation: MyApiContract
   step broadcast: BroadcastService
   step withdrawal: WithdrawalService
   step transfer: ProcessTransferService
-  step serializer: MyApiSerializer
+
+  on_success MyApiSerializer
 
   def call(raw_params)
     params = step validation.call(validation), err: ApiErr.call(422)
     transfer = step funds_transfer_transaction(params[:account_id])
     broadcast.call(transfer.to_event)
-
-    serializer.call(transfer.meta)
+    transfer.meta
   end
 
   def funds_transfer_transaction(acc_id)
-    acc = find_acc!(acc_id)
+    # NOTE: sane as Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.call(404))
+    acc = step { Account.find(acc_id) }, err: ApiErr.cal(404)
     withdrawal = step err: ApiErr.cal(409)
     withdrawal.call(acc),
     transfer = step transfer.call(withdrawal), err: ApiErr.call(503)
-
     Success(transfer)
   end
-
-  # NOTE: also supports block evaluetion
-  # same as: step { Account.find(acc_id) }, err: ApiErr.cal(404)
-  def find_acc!
-    Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.call(404))
-  end
 end
+```
 
-# NOTE: Using Dependency Injection (DI)
+### NOTE: Using Dependency Injection (DI)
+
+```ruby
 class Api::V2::WithdrawalController
   def index
     run_and_render Withdrawal::Operation::Create.call(unsafe_params) do
       step broadcast: API::V2::BroadcastService
       step transfer: API::V2::PaymentProcessorService
-      step serializer: API::V2::MyApiSerializer
+
+      on_success ApiErrMap
+      on_failure V2::ApiErrMap
     end
   end
 end
