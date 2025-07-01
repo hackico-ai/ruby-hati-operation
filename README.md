@@ -179,18 +179,25 @@ class Withdrawal::Operation::Create < ApiOperation
 end
 ```
 
-## Experimental: full speed DSL using contextual result passing
+## Experimental: Trailblazer-inspired DSL using contextual result passing
 
 ```ruby
 class Withdrawal::Operation::Create < ApiOperation
   steps do
     step contract: CreateContract
+    step :account
     step withdrawal: WithdrawalService
     step transfer: ProcessTransferService
+    step back_up: { BackupStorage.new.persist(ctx[:transfer_id]) }
     step broadcast: BroadcastService
 
     on_failure API::ErrorMap
     on_success TransferSerializer, status: 201
+  end
+
+  def account
+    id = ctx[:account_id]
+    # ...
   end
 end
 ```
