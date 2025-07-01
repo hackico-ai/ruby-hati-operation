@@ -92,8 +92,8 @@ class Api::V2::WithdrawalController
 
   private
 
-  def run_and_render(result)
-   rpepare_result = JsonResult.new(value)
+  def run_and_render(result, status: 200)
+   rpepare_result = JsonResult.new(value, on_success: status)
 
    render json: result.data, status: result.status
   end
@@ -143,9 +143,7 @@ end
   def unsafe_params = params.to_unsafe_h
 
   def run_and_render(operation, &block)
-   result = operation.call(unsafe_params).value
-
-   render json: result.data, status: result.status[:status]
+   render JsonResult.prepare operation.call(unsafe_params).value
   end
 
 class Withdrawal::Operation::Create < ApiOperation
