@@ -44,7 +44,7 @@ class Withdrawal::Operation::Create < HatiOperation::Base
   on_call CreateContract, err: ApiErr.call(422)
   on_success TransferSerializer
 
-  ar_transaction :funds_transfer
+  ar_transaction :funds_transfer_transaction!
 
   step broadcast: BroadcastService
   step withdrawal: WithdrawalService
@@ -56,7 +56,7 @@ class Withdrawal::Operation::Create < HatiOperation::Base
     transfer.meta
   end
 
-  def funds_transfer_transaction(acc_id)
+  def funds_transfer_transaction!(acc_id)
     acc = step { Account.find(acc_id) }, err: ApiErr.cal(404)
     withdrawal = step withdrawal.call(acc), err: ApiErr.cal(409)
     transfer = step transfer.call(withdrawal), err: ApiErr.call(503)
@@ -75,7 +75,7 @@ class Api::V2::WithdrawalController
       step transfer: API::V2::PaymentProcessorService
 
       on_success ApiErrMap
-      on_failure V2::ApiErrMap
+      on_failure V2::ApiErrMap # in case of re-mapping
     end
   end
 end
