@@ -28,6 +28,12 @@ bundle install
 Here is a simple example of how to use HatiOperation in rapid isolated api development:
 
 ```ruby
+class Api::V1::WithdrawalController
+  def index
+    run_and_render Withdrawal::Operation::Create.call(unsafe_params)
+  end
+end
+
 class Withdrawal::Operation::Create < HatiOperation::Base
   operation do
     unexpected_err ApiErr.call(500)
@@ -64,13 +70,7 @@ class Withdrawal::Operation::Create < HatiOperation::Base
   end
 end
 
-class Api::V1::WithdrawalController
-  def index
-    run_and_render Withdrawal::Operation::Create.call(unsafe_params)
-  end
-end
-
-# e.g. Using Dependency Injection (DI)
+# NOTE: Using Dependency Injection (DI)
 class Api::V2::WithdrawalController
   def index
     run_and_render Withdrawal::Operation::Create.call(unsafe_params) do
