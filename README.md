@@ -179,7 +179,7 @@ class Withdrawal::Operation::Create < ApiOperation
 end
 ```
 
-## Experimental: full speed DSL using contextual resul passing
+## Experimental: full speed DSL using contextual result passing
 
 ```ruby
 class Withdrawal::Operation::Create < ApiOperation
