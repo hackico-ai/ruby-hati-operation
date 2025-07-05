@@ -3,15 +3,37 @@
 [![Gem Version](https://badge.fury.io/rb/hati_operation.svg)](https://rubygems.org/gems/hati_operation)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
 
-HatiOperation is a lightweight Ruby toolkit that helps you compose domain logic into clear, reusable **operations**. It provides:
+HatiOperation is a lightweight Ruby toolkit that helps you compose domain logic into clear, reusable **operations**. Built on top of [hati-command](https://github.com/hackico-ai/ruby-hati-command), it serves as an **aggregator** that orchestrates multiple services and commands into cohesive business operations.
 
-- **Step-based execution** – write each unit of work as a small service object and compose them with `step`.
-- **Implicit result propagation** – methods return `Success(...)` or `Failure(...)` and are automatically unpacked.
-- **Fail-fast transactions** – stop the chain as soon as a step fails.
-- **Dependency injection (DI)** – override steps at call-time for ultimate flexibility.
-- **Macro DSL** – declaratively configure validation, error mapping, transactions and more.
+## ✨ Key Features
 
-## Table of Contents
+- **Step-based execution** – write each unit of work as a small service object and compose them with `step`
+- **Implicit result propagation** – methods return `Success(...)` or `Failure(...)` and are automatically unpacked
+- **Fail-fast transactions** – stop the chain as soon as a step fails
+- **Dependency injection (DI)** – override steps at call-time for ultimate flexibility
+- **Macro DSL** – declaratively configure validation, error mapping, transactions and more
+- **Service aggregation** – orchestrate multiple services into cohesive business operations
+
+## 🏗️ Architecture
+
+HatiOperation builds on top of [hati-command](https://github.com/hackico-ai/ruby-hati-command) and serves as an **aggregator pattern** implementation:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    HatiOperation                            │
+│                   (Aggregator Layer)                        │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │  Service A  │  │  Service B  │  │  Service C  │          │
+│  │ (Command)   │  │ (Command)   │  │ (Command)   │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+├─────────────────────────────────────────────────────────────┤
+│                   hati-command                              │
+│                 (Foundation Layer)                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 📋 Table of Contents
 
 1. [Installation](#installation)
 2. [Quick Start](#quick-start)
@@ -22,7 +44,7 @@ HatiOperation is a lightweight Ruby toolkit that helps you compose domain logic 
 7. [Contributing](#contributing)
 8. [License](#license)
 
-## Installation
+## 🚀 Installation
 
 Add HatiOperation to your Gemfile and bundle:
 
@@ -41,9 +63,9 @@ Alternatively:
 gem install hati_operation
 ```
 
-## Quick Start
+## 🎯 Quick Start
 
-The example below shows how HatiOperation can be leveraged inside a **Rails API** controller.
+The example below shows how HatiOperation can be leveraged inside a **Rails API** controller to aggregate multiple services:
 
 ```ruby
 # app/controllers/api/v1/withdrawal_controller.rb
@@ -67,11 +89,11 @@ class Api::V1::WithdrawalController < ApplicationController
 end
 ```
 
-### Defining the Operation
+### 🔧 Defining the Operation
 
 ```ruby
 # app/operations/withdrawal/operation/create.rb
-class Withdrawal::Operation::Create < ApiOperation
+class Withdrawal::Operation::Create < HatiOperation::Base
   # Wrap everything in DB transaction
   ar_transaction :funds_transfer_transaction!
 
@@ -86,7 +108,7 @@ class Withdrawal::Operation::Create < ApiOperation
   def funds_transfer_transaction(acc_id)
     acc = Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.call(404))
 
-    withdrawal = step WithdrawalService.call(acc), err: ApiErr.cal(409)
+    withdrawal = step WithdrawalService.call(acc), err: ApiErr.call(409)
     transfer = step ProcessTransferService.call(withdrawal), err: ApiErr.call(503)
 
     Success(transfer)
@@ -94,27 +116,39 @@ class Withdrawal::Operation::Create < ApiOperation
 end
 ```
 
-## Step DSL
-
-The DSL gives you fine-grained control over every stage of the operation:
+### 🎛️ Base Operation Configuration
 
 ```ruby
-class ApiOperation
+class ApiOperation < HatiOperation::Base
   operation do
     unexpected_err ApiErr.call(500)
   end
 end
 ```
 
-- `step` ‑ register a dependency.
-- `params` ‑ validate/transform incoming params.
-- `on_success` / `on_failure` ‑ map results.
-- `ar_transaction` ‑ execute inside DB transaction.
-- `fail_fast`, `failure`, `unexpected_err` ‑ configure generic error behaviour.
+## 🛠️ Step DSL
 
-## Dependency Injection
+The DSL gives you fine-grained control over every stage of the operation:
 
-At runtime you can swap out any step for testing, feature-flags, etc.
+### Core DSL Methods
+
+- `step` – register a dependency service
+- `params` – validate/transform incoming parameters
+- `on_success` – handle successful operation results
+- `on_failure` – map and handle failure results
+
+### Extended Configuration
+
+> 📖 **See:** [hati-command](https://github.com/hackico-ai/ruby-hati-command) for all configuration options
+
+- `ar_transaction` – execute inside database transaction
+- `fail_fast` – configure fail-fast behavior
+- `failure` – set default failure handling
+- `unexpected_err` – configure generic error behavior
+
+## 🔄 Dependency Injection
+
+At runtime you can swap out any step for testing, feature-flags, or different environments:
 
 ```ruby
 result = Withdrawal::Operation::Create.call(params) do
@@ -123,9 +157,11 @@ result = Withdrawal::Operation::Create.call(params) do
 end
 ```
 
-## Alternative DSL Styles
+## 🎨 Alternative DSL Styles
 
-Prefer more declarative code? Combine your steps inside a single `steps` block:
+### Declarative Style
+
+Prefer more declarative code? Use the class-level DSL:
 
 ```ruby
 class Withdrawal::Operation::Create < ApiOperation
@@ -140,7 +176,7 @@ class Withdrawal::Operation::Create < ApiOperation
   on_success SerializerService.call(Transfer, status: 201)
   on_failure ApiErrorSerializer
 
-  # requires :params keyword to acess overwritten params
+  # requires :params keyword to access overwritten params
   # same as params = step CreateContract.call(params), err: ApiErr.call(422)
   def call(params:)
     transfer = step funds_transfer_transaction!(params[:account_id])
@@ -170,7 +206,7 @@ class Api::V2::WithdrawalController < ApiController
 end
 ```
 
-### Full-Stack DI Example
+### 🏗️ Full-Stack DI Example
 
 ```ruby
 class Api::V2::WithdrawalController < ApplicationController
@@ -184,7 +220,7 @@ class Api::V2::WithdrawalController < ApplicationController
 end
 ```
 
-## Testing
+## 🧪 Testing
 
 Run the test-suite with:
 
@@ -194,14 +230,14 @@ bundle exec rspec
 
 HatiOperation is fully covered by RSpec. See `spec/` for reference examples including stubbed services and DI.
 
-## Contributing
+## 🤝 Contributing
 
 Bug reports and pull requests are welcome on GitHub. Please:
 
-1. Fork the project and create your branch from `main`.
-2. Run `bundle exec rspec` to ensure tests pass.
-3. Submit a pull request with a clear description of your changes.
+1. Fork the project and create your branch from `main`
+2. Run `bundle exec rspec` to ensure tests pass
+3. Submit a pull request with a clear description of your changes
 
-## License
+## 📄 License
 
 HatiOperation is released under the MIT License.
