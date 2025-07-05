@@ -28,12 +28,13 @@ bundle install
 Here is a simple example of how to use HatiOperation in rapid isolated Rails API development:
 
 - mainly used as Result unpacker
+- preferable for more explicit controled interactions
 
 ```ruby
 # Rails API controller
 class Api::V1::WithdrawalControlle < ApplicationController
   def create
-    result = Withdrawal::Operation::Create.call(params.to_unsafe_h)
+    result = Withdrawal::Operation::Create.call(params: params.to_unsafe_h)
 
     if result.success?
       render json: TransferSerializer.new.serioalize(result.success), status: 201
@@ -44,19 +45,19 @@ class Api::V1::WithdrawalControlle < ApplicationController
   end
 end
 
-# Base API operation class
+# Base operation class
 class ApiOperation
   operation do
     unexpected_err ApiErr.call(500)
   end
 end
 
-# API controller
+# API operation
 class Withdrawal::Operation::Create < ApiOperation
   ar_transaction :funds_transfer_transaction!
 
-  def call(raw_params)
-    params = step MyApiContract.call(raw_params), err: ApiErr.call(422)
+  def call(params:)
+    params = step MyApiContract.call(params), err: ApiErr.call(422)
     transfer = step funds_transfer_transaction(params[:account_id])
     EventBroadcast.new.stream(transfer.to_event)
 
@@ -72,7 +73,30 @@ class Withdrawal::Operation::Create < ApiOperation
     Success(transfer)
   end
 end
+```
 
+### Or more agenda style
+
+```ruby
+class Withdrawal::Operation::Create < ApiOperation
+  ar_transaction :funds_transfer_transaction!
+
+  def call(params:)
+    params = validate_params(params)
+    transfer = transaction_step(params[:account_id])
+    # ...
+  end
+
+  def validation_step(raw_params)
+    step MyApiContract.call(raw_params), err: ApiErr.call(422)
+  end
+
+  def transaction_step(acc_id)
+    step funds_transfer_transaction!(acc_id)
+  end
+
+  # ...
+end
 ```
 
 ## Using Dependency Injection (DI)
@@ -110,7 +134,7 @@ class Withdrawal::Operation::Create < ApiOperation
   step validation: MyApiContract
   step withdrawal: WithdrawalService
   step transfer: ProcessTransferService
-  step broadcast: BroadcastService
+  step broadcast: Broadcast
   step serializer: TransferSerializer
 
   def call(raw_params)
@@ -124,7 +148,7 @@ class Withdrawal::Operation::Create < ApiOperation
   def funds_transfer_transaction!(acc_id)
     acc = find_acc!(acc_id)
 
-    withdrawal = step withdrawal.call(acc), err: ApiErr.cal(409)
+    withdrawal = step withdrawal.call(acc), err: ApiErr.call(409)
     transfer = step transfer.call(withdrawal), err: ApiErr.call(503)
 
     Success(transfer)
@@ -137,6 +161,10 @@ end
 ```
 
 ## Here is more DSL-ish example of usage
+
+- more input-output abstracted
+- if less boiler-plated core logic focused approach is needed
+- **params** will override operation's arguments by passing them to assigned command, requires **params** keyword for main caller method
 
 ```ruby
 class ApiController < ApplicationController
@@ -155,23 +183,28 @@ class Api::V2::WithdrawalController < ApiController
 end
 
 class Withdrawal::Operation::Create < ApiOperation
-  on_call CreateContract, err: ApiErr.call(422)
-  on_success TransferSerializer, status: 201
+  params CreateContract, err: ApiErr.call(422)
 
   ar_transaction :funds_transfer_transaction!
 
-  step withdrawal: WithdrawalService, err: ApiErr.cal(409)
+  step withdrawal: WithdrawalService, err: ApiErr.call(409)
   step transfer: ProcessTransferService, err: ApiErr.call(503)
-  step broadcast: BroadcastService
+  step broadcast: Broadcast
 
+  on_success SerializerService.call(Transfer, status: 201)
+  on_failure ApiErrorSerializer
+
+  # requires :params keyword to acess overwritten params
+  # same as params = step CreateContract.call(params), err: ApiErr.call(422)
   def call(params:)
-    transfer = step funds_transfer_transaction(params[:account_id])
+    transfer = step funds_transfer_transaction!(params[:account_id])
     broadcast.new.stream(transfer.to_event)
     transfer.meta
   end
 
   def funds_transfer_transaction!(acc_id)
-    acc = step { Account.find(acc_id) }, err: ApiErr.call(404)
+    acc = step(err: ApiErr.call(404)) { User.find(id) }
+
     withdrawal = step withdrawal.call(acc)
     transfer = step transfer.call(withdrawal)
     Success(transfer)
@@ -179,7 +212,9 @@ class Withdrawal::Operation::Create < ApiOperation
 end
 ```
 
-## Experimental: Trailblazer-inspired DSL using contextual result passing
+## TBD Experimental: DSL-heavy using contextual result passing
+
+- **warn**: This can be fine for very straightforward or CRUD-style use cases. However, as your system grows it can feel out of control and harder to follow. For that reason, the more explicit options above are preferred for large scale systems.
 
 ```ruby
 class Withdrawal::Operation::Create < ApiOperation
@@ -192,7 +227,7 @@ class Withdrawal::Operation::Create < ApiOperation
     step broadcast: BroadcastService
 
     on_failure API::ErrorMap
-    on_success TransferSerializer, status: 201
+    on_success Serializer[Transfer, status: 201]
   end
 
   def account
@@ -219,3 +254,7 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## License
 
 This project is licensed under the MIT License.
+
+```
+
+```

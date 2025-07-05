@@ -11,5 +11,11 @@ module HatiOperation
 
       configurations[step_name] = step_klass
     end
+
+    # WIP: so far as API adapter
+    def params(command = nil, err: nil)
+      configurations[:params] = command
+      configurations[:params_err] = err
+    end
   end
 end

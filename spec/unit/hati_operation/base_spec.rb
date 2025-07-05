@@ -4,26 +4,33 @@ require 'spec_helper'
 
 RSpec.describe HatiOperation::Base do
   subject(:base_klass) { described_class }
-  let(:operation) { base_klass.new }
+  # let(:operation_name) { 'MyDummyOperation' }
+
+  # before do
+  #   stub_const(operation_name, base_klass)
+  # end
+
+  let(:dummy_operation) { Class.new(base_klass) }
 
   context 'when use configurations' do
     describe '.step' do
       it 'has configuration map' do
-        expect(base_klass.operation_config).to eq({})
+        expect(dummy_operation.operation_config).to eq({})
       end
     end
 
     describe '.operation_config' do
       it 'has configuration map' do
-        expect(base_klass.operation_config).to eq({})
+        expect(dummy_operation.operation_config).to eq({})
       end
     end
   end
 
   # NOTE:  only for development and test
   context 'when private instance api' do
-    let(:operation) { base_klass.send(:new) }
+    let(:operation) { dummy_operation.send(:new) }
     let(:valid_result) { HatiCommand::Success.new('Valid Result') }
+
     describe '#step' do
       let(:invalid_result) { 'InvalidResult' }
 

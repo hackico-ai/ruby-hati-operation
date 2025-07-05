@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.name    = 'hati-operation'
   spec.version = HatiOperation::VERSION
   spec.authors = ['Mariya Giy', 'Yuri Gi']
-  spec.email   = %w[yurigi.pro@gmail.com giy.mariya@gmail.com]
+  spec.email   = %w[giy.mariya@gmail.com yurigi.pro@gmail.com]
   spec.license = 'MIT'
 
   spec.summary     = 'A Ruby gem for encapsulating business logic in reusable, testable operation classes.'

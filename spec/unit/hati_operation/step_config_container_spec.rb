@@ -21,4 +21,15 @@ RSpec.describe HatiOperation::StepConfigContainer do
       expect(configs[:a]).to eq(1)
     end
   end
+
+  describe '#params' do
+    it 'use params for configs setup' do
+      container.params 'a', err: 'b'
+
+      aggregate_failures 'of params config' do
+        expect(configs[:params]).to eq('a')
+        expect(configs[:params_err]).to eq('b')
+      end
+    end
+  end
 end

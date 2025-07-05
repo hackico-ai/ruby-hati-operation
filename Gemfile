@@ -8,6 +8,9 @@ gem 'hati-command', git: 'https://github.com/hackico-ai/ruby-hati-command', bran
 # gem 'hati-command'
 gem 'rake'
 
+# Debug
+gem 'pry'
+
 # Spec
 gem 'rspec', '~> 3.0'
 

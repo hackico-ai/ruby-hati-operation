@@ -3,7 +3,7 @@
 # NOTE: helper names follow convention 'support_<module_name>_<helper_name>'
 
 module Dummy
-  def support_dummy_service_map
+  def support_dummy_service_base
     stub_const('DummyServiceBase', Class.new do
       include HatiCommand::Cmd
 
@@ -12,12 +12,5 @@ module Dummy
         halt ? Failure() : Success()
       end
     end)
-
-    {
-      base: DummyServiceBase,
-      account: stub_const('AccountService', Class.new(DummyServiceBase)),
-      broadcast: stub_const('BroadcastService', Class.new(DummyServiceBase)),
-      withdrawal: stub_const('WithdrawalService', Class.new(DummyServiceBase))
-    }
   end
 end
