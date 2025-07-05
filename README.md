@@ -1,59 +1,78 @@
 # HatiOperation
 
-HatiOperation is a Ruby library designed to facilitate the creation of operations with a focus on step-based execution and dependency injection. It provides a simple and intuitive way to define operations, manage configurations, and handle results.
+[![Gem Version](https://badge.fury.io/rb/hati_operation.svg)](https://rubygems.org/gems/hati_operation)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
 
-## Features
+HatiOperation is a lightweight Ruby toolkit that helps you compose domain logic into clear, reusable **operations**. It provides:
 
-- Implicit result return
-- Object-level step for unpacking values
-- Forced logical transactional behavior with fail-fast on failure
-- Class-level macros for dependency injection
+- **Step-based execution** – write each unit of work as a small service object and compose them with `step`.
+- **Implicit result propagation** – methods return `Success(...)` or `Failure(...)` and are automatically unpacked.
+- **Fail-fast transactions** – stop the chain as soon as a step fails.
+- **Dependency injection (DI)** – override steps at call-time for ultimate flexibility.
+- **Macro DSL** – declaratively configure validation, error mapping, transactions and more.
+
+## Table of Contents
+
+1. [Installation](#installation)
+2. [Quick Start](#quick-start)
+3. [Step DSL](#step-dsl)
+4. [Dependency Injection](#dependency-injection)
+5. [Alternative DSL Styles](#alternative-dsl-styles)
+6. [Testing](#testing)
+7. [Contributing](#contributing)
+8. [License](#license)
 
 ## Installation
 
-To install HatiOperation, add the following line to your Gemfile:
+Add HatiOperation to your Gemfile and bundle:
 
 ```ruby
+# Gemfile
 gem 'hati_operation'
 ```
-
-Then run:
 
 ```bash
 bundle install
 ```
 
-## Usage
+Alternatively:
 
-Here is a simple example of how to use HatiOperation in rapid isolated Rails API development:
+```bash
+gem install hati_operation
+```
 
-- mainly used as Result unpacker
-- preferable for more explicit controled interactions
+## Quick Start
+
+The example below shows how HatiOperation can be leveraged inside a **Rails API** controller.
 
 ```ruby
-# Rails API controller
-class Api::V1::WithdrawalControlle < ApplicationController
+# app/controllers/api/v1/withdrawal_controller.rb
+class Api::V1::WithdrawalController < ApplicationController
   def create
     result = Withdrawal::Operation::Create.call(params: params.to_unsafe_h)
 
+    run_and_render(result)
+  end
+
+  private
+
+  def run_and_render(result)
     if result.success?
-      render json: TransferSerializer.new.serioalize(result.success), status: 201
+      render json: TransferSerializer.new.serialize(result.value), status: :created
     else
-      api_error = APiError.new .map(result.value)
-      render json: api_error.to_json, status: api_error.status
+      error = ApiError.new(result.value)
+      render json: error.to_json, status: error.status
     end
   end
 end
+```
 
-# Base operation class
-class ApiOperation
-  operation do
-    unexpected_err ApiErr.call(500)
-  end
-end
+### Defining the Operation
 
-# API operation
+```ruby
+# app/operations/withdrawal/operation/create.rb
 class Withdrawal::Operation::Create < ApiOperation
+  # Wrap everything in DB transaction
   ar_transaction :funds_transfer_transaction!
 
   def call(params:)
@@ -75,96 +94,38 @@ class Withdrawal::Operation::Create < ApiOperation
 end
 ```
 
-### Or more agenda style
+## Step DSL
+
+The DSL gives you fine-grained control over every stage of the operation:
 
 ```ruby
-class Withdrawal::Operation::Create < ApiOperation
-  ar_transaction :funds_transfer_transaction!
-
-  def call(params:)
-    params = validate_params(params)
-    transfer = transaction_step(params[:account_id])
-    # ...
-  end
-
-  def validation_step(raw_params)
-    step MyApiContract.call(raw_params), err: ApiErr.call(422)
-  end
-
-  def transaction_step(acc_id)
-    step funds_transfer_transaction!(acc_id)
-  end
-
-  # ...
-end
-```
-
-## Using Dependency Injection (DI)
-
-```ruby
-# Rails API controller
-class Api::V2::WithdrawalController < ApplicationController
-  def create
-    run_and_render Withdrawal::Operation::Create.call(unsafe_params), status: 201  do
-      step broadcast: API::V2::BroadcastService, err: SpecialNewApiError
-      step transfer: API::V2::PaymentProcessorService
-      step serializer: ExtendedTransferSerializer
-
-      # if result re-mapping is needed
-      on_failure V2::API::ErrorMap
-    end
-  end
-
-  private
-
-  def unsafe_params
-    params.to_unsafe_h
-  end
-
-  def run_and_render(result, status: 200)
-   rpepare_result = JsonResult.new(value, on_success: status)
-
-   render json: result.data, status: result.status
-  end
-end
-
-class Withdrawal::Operation::Create < ApiOperation
-  ar_transaction :funds_transfer_transaction!
-
-  step validation: MyApiContract
-  step withdrawal: WithdrawalService
-  step transfer: ProcessTransferService
-  step broadcast: Broadcast
-  step serializer: TransferSerializer
-
-  def call(raw_params)
-    params = step validation.call(raw_params), err: ApiErr.call(422)
-    transfer = step funds_transfer_transaction(params[:account_id])
-    broadcast.new.stream(transfer.to_event)
-
-    serializer.call(transfer.meta)
-  end
-
-  def funds_transfer_transaction!(acc_id)
-    acc = find_acc!(acc_id)
-
-    withdrawal = step withdrawal.call(acc), err: ApiErr.call(409)
-    transfer = step transfer.call(withdrawal), err: ApiErr.call(503)
-
-    Success(transfer)
-  end
-
-  def find_acc!
-    Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.call(404))
+class ApiOperation
+  operation do
+    unexpected_err ApiErr.call(500)
   end
 end
 ```
 
-## Here is an Example of More DSL-ish Usage
+- `step` ‑ register a dependency.
+- `params` ‑ validate/transform incoming params.
+- `on_success` / `on_failure` ‑ map results.
+- `ar_transaction` ‑ execute inside DB transaction.
+- `fail_fast`, `failure`, `unexpected_err` ‑ configure generic error behaviour.
 
-- The input-output is more abstracted.
-- This approach is recommended if less boilerplate and a focus on core logic is needed.
-- The **_params_** (operation config) will override the operation's arguments by passing them to the assigned command. This requires the **_params_** keyword for the main caller method.
+## Dependency Injection
+
+At runtime you can swap out any step for testing, feature-flags, etc.
+
+```ruby
+result = Withdrawal::Operation::Create.call(params) do
+  step broadcast: DummyBroadcastService
+  step transfer:  StubbedPaymentProcessor
+end
+```
+
+## Alternative DSL Styles
+
+Prefer more declarative code? Combine your steps inside a single `steps` block:
 
 ```ruby
 class Withdrawal::Operation::Create < ApiOperation
@@ -209,45 +170,38 @@ class Api::V2::WithdrawalController < ApiController
 end
 ```
 
-## TBD Experimental: DSL-heavy using contextual result passing
-
-- **warn**: This can be fine for very straightforward or CRUD-style use cases. However, as your system grows it can feel out of control and harder to follow. For that reason, the more explicit options above are preferred for large scale systems.
+### Full-Stack DI Example
 
 ```ruby
-class Withdrawal::Operation::Create < ApiOperation
-  steps do
-    step contract: CreateContract
-    step :account
-    step withdrawal: WithdrawalService
-    step transfer: ProcessTransferService
-    step back_up: { BackupStorage.new.persist(ctx[:transfer_id]) }
-    step broadcast: BroadcastService
-
-    on_failure API::ErrorMap
-    on_success Serializer[Transfer, status: 201]
-  end
-
-  def account
-    id = ctx[:account_id]
-    # ...
+class Api::V2::WithdrawalController < ApplicationController
+  def create
+    run_and_render Withdrawal::Operation::Create.call(params.to_unsafe_h) do
+      step broadcast: API::V2::BroadcastService
+      step transfer:  API::V2::PaymentProcessorService
+      step serializer: ExtendedTransferSerializer
+    end
   end
 end
 ```
 
 ## Testing
 
-To run the tests for HatiOperation, use the following command:
+Run the test-suite with:
 
 ```bash
-rspec
+bundle exec rspec
 ```
 
-Make sure you have RSpec installed and configured in your project.
+HatiOperation is fully covered by RSpec. See `spec/` for reference examples including stubbed services and DI.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+Bug reports and pull requests are welcome on GitHub. Please:
+
+1. Fork the project and create your branch from `main`.
+2. Run `bundle exec rspec` to ensure tests pass.
+3. Submit a pull request with a clear description of your changes.
 
 ## License
 
-This project is licensed under the MIT License.
+HatiOperation is released under the MIT License.
