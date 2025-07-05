@@ -160,28 +160,13 @@ class Withdrawal::Operation::Create < ApiOperation
 end
 ```
 
-## Here is more DSL-ish example of usage
+## Here is an Example of More DSL-ish Usage
 
-- more input-output abstracted
-- if less boiler-plated core logic focused approach is needed
-- **params** will override operation's arguments by passing them to assigned command, requires **params** keyword for main caller method
+- The input-output is more abstracted.
+- This approach is recommended if less boilerplate and a focus on core logic is needed.
+- The **_params_** (operation config) will override the operation's arguments by passing them to the assigned command. This requires the **_params_** keyword for the main caller method.
 
 ```ruby
-class ApiController < ApplicationController
-  # ...
-  private
-
-  def run_and_render(operation, &block)
-   render JsonResult.prepare operation.call(params.to_unsafe_h).value
-  end
-end
-
-class Api::V2::WithdrawalController < ApiController
-  def create
-    run_and_render Withdrawal::Operation::Create
-  end
-end
-
 class Withdrawal::Operation::Create < ApiOperation
   params CreateContract, err: ApiErr.call(422)
 
@@ -208,6 +193,18 @@ class Withdrawal::Operation::Create < ApiOperation
     withdrawal = step withdrawal.call(acc)
     transfer = step transfer.call(withdrawal)
     Success(transfer)
+  end
+end
+
+class Api::V2::WithdrawalController < ApiController
+  def create
+    run_and_render Withdrawal::Operation::Create
+  end
+
+  private
+
+  def run_and_render(operation, &block)
+   render JsonResult.prepare operation.call(params.to_unsafe_h).value
   end
 end
 ```
@@ -254,7 +251,3 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## License
 
 This project is licensed under the MIT License.
-
-```
-
-```
