@@ -33,6 +33,5 @@ Gem::Specification.new do |spec|
 
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  # TODO: while in dev
-  # spec.add_dependency 'hati-command'
+  spec.add_dependency 'hati-command'
 end

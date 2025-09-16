@@ -4,8 +4,7 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'hati-command', git: 'https://github.com/hackico-ai/ruby-hati-command', branch: 'dev'
-# gem 'hati-command'
+gem 'hati-command'
 gem 'rake'
 
 # Debug
