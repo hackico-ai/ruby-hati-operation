@@ -8,8 +8,8 @@ require 'hati_operation/version'
 Gem::Specification.new do |spec|
   spec.name    = 'hati-operation'
   spec.version = HatiOperation::VERSION
-  spec.authors = ['Mariya Giy', 'Yuri Gi']
-  spec.email   = %w[giy.mariya@gmail.com yurigi.pro@gmail.com]
+  spec.authors = ['Mariya Giy']
+  spec.email   = %w[giy.mariya@gmail.com]
   spec.license = 'MIT'
 
   spec.summary     = 'A Ruby gem for encapsulating business logic in reusable, testable operation classes.'
