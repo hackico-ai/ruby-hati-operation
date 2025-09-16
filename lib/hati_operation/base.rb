@@ -38,20 +38,25 @@ module HatiOperation
 
       # TODO: validate type
       def step(**kwargs)
-        name, command = kwargs.first
-
-        if kwargs[:error]
-          error_name = "#{name}_error".to_sym
-          operation_config[error_name] = kwargs[:error]
-        end
-
         # TODO: add specific error
         raise 'Invalid Step type. Expected HatiCommand::Cmd' unless included_modules.include?(HatiCommand::Cmd)
 
+        name, command = kwargs.first
+
+        if kwargs[:err]
+          error_name = "#{name}_error".to_sym
+          operation_config[error_name] = kwargs[:err]
+        end
+
+        # WIP: restructure
         operation_config[name] = command
 
         define_method(name) do
-          step_configs[name] || self.class.operation_config[name]
+          configs = self.class.operation_config
+
+          step_exec_stack.append({ step: name, err: configs[error_name], done: false })
+
+          step_configs[name] || configs[name]
         end
       end
 
@@ -77,7 +82,8 @@ module HatiOperation
           end
 
           params_rez = params_modifier.call(kwargs[:params])
-          params_err = reciever.step_configs[:params_err] || operation_config[:params_err]
+          reciever_configs = reciever&.step_configs || {}
+          params_err = reciever_configs[:params_err] || operation_config[:params_err]
 
           if params_rez.failure?
             # WIP: override or nest ???
@@ -108,16 +114,36 @@ module HatiOperation
       @step_configs ||= {}
     end
 
+    # keep track of step macro calls
+    def step_exec_stack
+      @step_exec_stack ||= []
+    end
+
     # unpack result
     # wraps implicitly
     def step(result = nil, err: nil, &block)
+      return __step_block_call!(err: err, &block) if block_given?
+
+      last_step = step_exec_stack.last
+      err ||= last_step[:err] if last_step
+
       if result.is_a?(HatiCommand::Result)
-        return result.failure? ? Failure!(result) : result.value
+        Failure!(result, err: err || result.error) if result.failure?
+
+        step_exec_stack.last[:done] = true if last_step
+
+        return result.value
       end
 
-      return block.call if block_given?
+      Failure!(result, err: err) if err && result.nil?
 
-      Success(result)
+      step_exec_stack.last[:done] = true if last_step
+
+      result
+    end
+
+    def __step_block_call!(err: nil)
+      yield
     rescue StandardError => e
       err ? Failure!(e, err: err) : Failure!(e)
     end
