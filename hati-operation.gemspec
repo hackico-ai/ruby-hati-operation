@@ -12,8 +12,8 @@ Gem::Specification.new do |spec|
   spec.email   = %w[giy.mariya@gmail.com]
   spec.license = 'MIT'
 
-  spec.summary     = 'A Ruby gem for encapsulating business logic in reusable, testable operation classes.'
-  spec.description = 'Encapsulates business logic in isolated, reusable operation classes for clarity and testability'
+  spec.summary     = 'A Ruby gem for building agentic-ready operations that seamlessly integrate traditional services and AI capabilities.'
+  spec.description = 'Modern service orchestration framework designed for the AI era. Enables rapid development of both traditional and AI-powered applications through composable, testable operations. Features agent-oriented architecture, AI-friendly patterns, and robust service composition.'
   spec.homepage    = "https://github.com/hackico-ai/#{spec.name}"
 
   spec.required_ruby_version = '>= 3.0.0'
