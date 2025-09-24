@@ -5,6 +5,30 @@
 
 HatiOperation is a next-generation Ruby toolkit that brings agent-oriented architecture to your applications. While powerful for traditional service orchestration, it's specifically designed to excel in modern AI-augmented development environments like GitHub Copilot, Cursor, and autonomous agent systems.
 
+## Table of Contents
+
+- [Core Design Philosophy](#core-design-philosophy)
+- [Architectural Patterns](#architectural-patterns)
+- [Quick Start](#quick-start)
+  - [Traditional Service Operation](#traditional-service-operation)
+  - [AI Agent Operation](#ai-agent-operation)
+  - [Copilot-Optimized Operation](#copilot-optimized-operation)
+- [Key Features for Modern Development](#key-features-for-modern-development)
+  - [Agent-Ready Architecture](#agent-ready-architecture)
+  - [AI Development Acceleration](#ai-development-acceleration)
+  - [Traditional Strengths](#traditional-strengths)
+- [Advanced Usage](#advanced-usage)
+  - [Agent Tool Integration](#agent-tool-integration)
+  - [AI Assistant Integration](#ai-assistant-integration)
+- [Development Workflow Integration](#development-workflow-integration)
+  - [With Cursor](#with-cursor)
+  - [With GitHub Copilot](#with-github-copilot)
+  - [With Autonomous Agents](#with-autonomous-agents)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Code of Conduct](#code-of-conduct)
+
 ## Core Design Philosophy
 
 HatiOperation implements the Agent-Oriented Programming (AOP) paradigm, making it ideal for:
@@ -110,28 +134,73 @@ class AIAssisted::Operation::GenerateCode < HatiOperation::Base
 end
 ```
 
-## Key Features for Modern Development
+## Key Features
 
-### Agent-Ready Architecture
+<table>
+<tr>
+  <th width="25%" align="left">Category</th>
+  <th width="35%" align="left">Feature</th>
+  <th width="40%" align="left">Description</th>
+</tr>
 
-- **Tool Registration** – Easily register and manage agent tools
-- **Safety Boundaries** – Built-in guardrails for agent actions
-- **Action Composition** – Chain multiple agent actions safely
-- **State Management** – Track and manage agent state
+<tr>
+  <td rowspan="4"><b>Agent-Ready Architecture</b></td>
+  <td>Tool Registration</td>
+  <td>Easily register and manage agent tools</td>
+</tr>
+<tr>
+  <td>Safety Boundaries</td>
+  <td>Built-in guardrails for agent actions</td>
+</tr>
+<tr>
+  <td>Action Composition</td>
+  <td>Chain multiple agent actions safely</td>
+</tr>
+<tr>
+  <td>State Management</td>
+  <td>Track and manage agent state</td>
+</tr>
 
-### AI Development Acceleration
+<tr><td colspan="3">&nbsp;</td></tr>
 
-- **Structured Patterns** – Clear patterns for AI tools to understand
-- **Predictable Flow** – Consistent operation structure
-- **Self-Documenting** – Clear step definitions aid AI comprehension
-- **Context Awareness** – Easy access to operation context
+<tr>
+  <td rowspan="4"><b>AI Development Acceleration</b></td>
+  <td>Structured Patterns</td>
+  <td>Clear patterns for AI tools to understand</td>
+</tr>
+<tr>
+  <td>Predictable Flow</td>
+  <td>Consistent operation structure</td>
+</tr>
+<tr>
+  <td>Self-Documenting</td>
+  <td>Clear step definitions aid AI comprehension</td>
+</tr>
+<tr>
+  <td>Context Awareness</td>
+  <td>Easy access to operation context</td>
+</tr>
 
-### Traditional Strengths
+<tr><td colspan="3">&nbsp;</td></tr>
 
-- **Service Orchestration** – Compose complex business operations
-- **Error Handling** – Sophisticated failure management
-- **Dependency Injection** – Flexible service composition
-- **Transaction Safety** – Atomic operation guarantees
+<tr>
+  <td rowspan="4"><b>Traditional Strengths</b></td>
+  <td>Service Orchestration</td>
+  <td>Compose complex business operations</td>
+</tr>
+<tr>
+  <td>Error Handling</td>
+  <td>Sophisticated failure management</td>
+</tr>
+<tr>
+  <td>Dependency Injection</td>
+  <td>Flexible service composition</td>
+</tr>
+<tr>
+  <td>Transaction Safety</td>
+  <td>Atomic operation guarantees</td>
+</tr>
+</table>
 
 ## Advanced Usage
 
@@ -208,16 +277,24 @@ RSpec.describe Agent::Operation::ExecuteAction do
 end
 ```
 
+## Authors
+
+- [Marie Giy](https://github.com/mariegiy)
+
+## Development
+
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+
 ## Contributing
 
-We welcome contributions! Please:
-
-1. Fork the project
-2. Create your feature branch
-3. Add tests for new features
-4. Ensure all tests pass
-5. Submit a PR with clear description
+Bug reports and pull requests are welcome on GitHub at https://github.com/hackico-ai/hati-command. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/hackico-ai/hati-command/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
-HatiOperation is available under the MIT License.
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+## Code of Conduct
+
+Everyone interacting in the HatCommand project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/hackico-ai/hati-command/blob/main/CODE_OF_CONDUCT.md).
