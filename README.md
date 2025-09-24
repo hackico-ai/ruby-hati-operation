@@ -3,44 +3,58 @@
 [![Gem Version](https://badge.fury.io/rb/hati_operation.svg)](https://rubygems.org/gems/hati_operation)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
 
-HatiOperation is a next-generation Ruby toolkit that brings agent-oriented architecture to your applications. While powerful for traditional service orchestration, it's specifically designed to excel in modern AI-augmented development environments like GitHub Copilot, Cursor, and autonomous agent systems.
+HatiOperation is a next-generation Ruby toolkit that combines powerful service orchestration with modern AI-ready architecture. Built on top of [hati-command](https://github.com/hackico-ai/ruby-hati-command), it serves as both a traditional **service aggregator** and an **AI-enhanced orchestrator**, making it perfect for building modern applications that blend business logic with AI capabilities.
+
+## Key Features
+
+### Core Orchestration
+
+- **Step-based execution** – write each unit of work as a small service object and compose them with `step`
+- **Implicit result propagation** – methods return `Success(...)` or `Failure(...)` and are automatically unpacked
+- **Fail-fast transactions** – stop the chain as soon as a step fails
+- **Dependency injection (DI)** – override steps at call-time for ultimate flexibility
+- **Macro DSL** – declaratively configure validation, error mapping, transactions and more
+- **Service aggregation** – orchestrate multiple services into cohesive business operations
+
+### AI-Ready Architecture
+
+- **Tool Integration** – seamlessly integrate AI services and LLM tools
+- **Safety Boundaries** – built-in guardrails for AI operations
+- **Action Composition** – chain multiple AI actions safely
+- **State Management** – track and manage AI agent state
+
+### Development Acceleration
+
+- **Structured Patterns** – clear patterns for both human and AI comprehension
+- **Predictable Flow** – consistent operation structure for better maintainability
+- **Self-Documenting** – clear step definitions aid both human and AI understanding
+- **Context Awareness** – easy access to operation context for all services
 
 ## Table of Contents
 
-- [Core Design Philosophy](#core-design-philosophy)
-- [Architectural Patterns](#architectural-patterns)
-- [Quick Start](#quick-start)
-  - [Traditional Service Operation](#traditional-service-operation)
-  - [AI Agent Operation](#ai-agent-operation)
-  - [Copilot-Optimized Operation](#copilot-optimized-operation)
-- [Key Features for Modern Development](#key-features-for-modern-development)
-  - [Agent-Ready Architecture](#agent-ready-architecture)
-  - [AI Development Acceleration](#ai-development-acceleration)
-  - [Traditional Strengths](#traditional-strengths)
-- [Advanced Usage](#advanced-usage)
-  - [Agent Tool Integration](#agent-tool-integration)
-  - [AI Assistant Integration](#ai-assistant-integration)
-- [Development Workflow Integration](#development-workflow-integration)
-  - [With Cursor](#with-cursor)
-  - [With GitHub Copilot](#with-github-copilot)
-  - [With Autonomous Agents](#with-autonomous-agents)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
-- [Code of Conduct](#code-of-conduct)
+1. [Key Features](#key-features)
+   - [Core Orchestration](#core-orchestration)
+   - [AI-Ready Architecture](#ai-ready-architecture)
+   - [Development Acceleration](#development-acceleration)
+2. [Architecture](#architecture)
+3. [Installation](#installation)
+4. [Quick Start](#quick-start)
+   - [Traditional Business Operation](#traditional-business-operation)
+   - [AI-Enhanced Operation](#ai-enhanced-operation)
+   - [Base Operation Configuration](#base-operation-configuration)
+5. [Step DSL](#step-dsl)
+6. [Dependency Injection](#dependency-injection)
+7. [Alternative DSL Styles](#alternative-dsl-styles)
+8. [Testing](#testing)
+9. [Authors](#authors)
+10. [Development](#development)
+11. [Contributing](#contributing)
+12. [License](#license)
+13. [Code of Conduct](#code-of-conduct)
 
-## Core Design Philosophy
+## Architecture
 
-HatiOperation implements the Agent-Oriented Programming (AOP) paradigm, making it ideal for:
-
-- **Traditional Service Composition** – Robust orchestration for standard business operations
-- **AI Integration** – Perfect for building autonomous agent systems and AI-powered services
-- **Agentic Friendly Architecture** – Structured for optimal interaction with AI coding assistants
-- **Rapid AI Development** – Seamless integration of ML models and AI services
-
-## Architectural Patterns
-
-HatiOperation serves as a universal orchestrator, equally capable in traditional and AI-augmented contexts:
+HatiOperation builds on top of [hati-command](https://github.com/hackico-ai/ruby-hati-command) and implements a versatile architecture that supports both traditional service aggregation and AI-enhanced operations:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -48,20 +62,20 @@ HatiOperation serves as a universal orchestrator, equally capable in traditional
 │            (Universal Service Orchestrator)                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Traditional Services        AI/Agent Services              │
+│  Traditional Services        AI/ML Services                 │
 │  ┌─────────────┐            ┌─────────────┐                 │
-│  │  Business   │            │   Agent     │                 │
-│  │  Logic      │            │   Actions   │                 │
+│  │  Business   │            │   LLM       │                 │
+│  │  Logic      │            │   Tools     │                 │
 │  └─────────────┘            └─────────────┘                 │
 │                                                             │
 │  ┌─────────────┐            ┌─────────────┐                 │
-│  │  Data       │            │   Model     │                 │
-│  │  Access     │            │   Inference │                 │
+│  │  Data       │            │   Agent     │                 │
+│  │  Services   │            │   Actions   │                 │
 │  └─────────────┘            └─────────────┘                 │
 │                                                             │
 │  ┌─────────────┐            ┌─────────────┐                 │
-│  │  External   │            │   Tool      │                 │
-│  │  Services   │            │   Calls     │                 │
+│  │  External   │            │   Safety    │                 │
+│  │  APIs       │            │   Guards    │                 │
 │  └─────────────┘            └─────────────┘                 │
 │                                                             │
 ├─────────────────────────────────────────────────────────────┤
@@ -70,212 +84,246 @@ HatiOperation serves as a universal orchestrator, equally capable in traditional
 └─────────────────────────────────────────────────────────────┘
 ```
 
+This dual-purpose architecture allows you to:
+
+- Compose traditional business services with robust error handling and transactions
+- Integrate AI capabilities with built-in safety mechanisms
+- Mix and match both paradigms in the same operation
+- Maintain clean separation of concerns while sharing common infrastructure
+
+## Installation
+
+Add HatiOperation to your Gemfile and bundle:
+
+```ruby
+# Gemfile
+gem 'hati_operation'
+```
+
+```bash
+bundle install
+```
+
+Alternatively:
+
+```bash
+gem install hati_operation
+```
+
 ## Quick Start
 
-### Traditional Service Operation
+HatiOperation can be used for both traditional business operations and AI-enhanced services. Here are examples of both:
+
+### Traditional Business Operation
 
 ```ruby
-# Standard business logic operation
-class Order::Operation::Create < HatiOperation::Base
-  def call(params:)
-    validated = step OrderValidator.call(params)
-    order = step create_order(validated)
-    notify_success(order)
+# app/controllers/api/v1/withdrawal_controller.rb
+class Api::V1::WithdrawalController < ApplicationController
+  def create
+    result = Withdrawal::Operation::Create.call(params: params.to_unsafe_h)
+    run_and_render(result)
+  end
 
-    Success(order)
+  private
+
+  def run_and_render(result)
+    if result.success?
+      render json: TransferSerializer.new.serialize(result.value), status: :created
+    else
+      error = ApiError.new(result.value)
+      render json: error.to_json, status: error.status
+    end
+  end
+end
+
+# app/operations/withdrawal/operation/create.rb
+class Withdrawal::Operation::Create < HatiOperation::Base
+  # Wrap everything in DB transaction
+  ar_transaction :funds_transfer_transaction!
+
+  def call(params:)
+    params = step MyApiContract.call(params), err: ApiErr.call(422)
+    transfer = step funds_transfer_transaction(params[:account_id])
+    EventBroadcast.new.stream(transfer.to_event)
+
+    transfer.meta
+  end
+
+  def funds_transfer_transaction(acc_id)
+    acc = Account.find_by(find_by: acc_id).presence : Failure!(err: ApiErr.call(404))
+
+    withdrawal = step WithdrawalService.call(acc), err: ApiErr.call(409)
+    transfer = step ProcessTransferService.call(withdrawal), err: ApiErr.call(503)
+
+    Success(transfer)
   end
 end
 ```
 
-### AI Agent Operation
+### AI-Enhanced Operation
 
 ```ruby
-# AI agent action orchestration
-class Agent::Operation::ExecuteAction < HatiOperation::Base
+# app/operations/ai/content_generation.rb
+class AI::Operation::ContentGeneration < HatiOperation::Base
+  # Register safety boundaries
+  safety_guard :content_filter
+  rate_limit max_tokens: 1000
+
+  step validator: ContentValidator
+  step generator: LLMService
+  step filter: ContentFilter
+  step formatter: OutputFormatter
+
   def call(params:)
-    # Parse and validate agent intent
-    intent = step IntentParser.call(params[:instruction])
+    # Validate input and prepare prompt
+    input = step validator.call(params[:prompt])
 
-    # Load relevant tools
-    tools = step ToolRegistry.load(intent.required_tools)
+    # Generate content with safety checks
+    content = step generator.call(input), err: AIErr.call(503)
+    filtered = step filter.call(content), err: AIErr.call(422)
 
-    # Execute action with safety checks
-    result = step SafeExecutor.call(tools, intent)
+    # Format and return
+    step formatter.call(filtered)
+  end
+end
 
-    # Log and analyze execution
-    step ActionAnalyzer.call(result)
+# Usage in controller
+class Api::V1::ContentController < ApplicationController
+  def create
+    result = AI::Operation::ContentGeneration.call(params: params.to_unsafe_h) do
+      # Override services for different models/providers
+      step generator: OpenAIService
+      step filter: CustomContentFilter
+    end
 
-    Success(result)
+    render_result(result)
   end
 end
 ```
 
-### Copilot-Optimized Operation
+### Base Operation Configuration
 
 ```ruby
-# Structured for optimal AI assistant interaction
-class AIAssisted::Operation::GenerateCode < HatiOperation::Base
-  # Clear step definitions help AI understand the flow
-  step validator: InputValidator
-  step analyzer: CodeAnalyzer
-  step generator: CodeGenerator
-  step tester: CodeTester
+# Common configuration for API operations
+class ApiOperation < HatiOperation::Base
+  operation do
+    unexpected_err ApiErr.call(500)
+  end
+end
 
-  def call(params:)
-    # Structured for easy AI completion
-    spec = step validator.call(params[:specification])
-    context = step analyzer.call(params[:codebase])
-
-    code = step generator.call(spec, context)
-    result = step tester.call(code)
-
-    Success(result)
+# Common configuration for AI operations
+class AIOperation < HatiOperation::Base
+  operation do
+    unexpected_err AIErr.call(500)
+    safety_guard :content_filter
+    rate_limit true
   end
 end
 ```
 
-## Key Features
+## Step DSL
 
-<table>
-<tr>
-  <th width="25%" align="left">Category</th>
-  <th width="35%" align="left">Feature</th>
-  <th width="40%" align="left">Description</th>
-</tr>
+The DSL gives you fine-grained control over every stage of the operation:
 
-<tr>
-  <td rowspan="4"><b>Agent-Ready Architecture</b></td>
-  <td>Tool Registration</td>
-  <td>Easily register and manage agent tools</td>
-</tr>
-<tr>
-  <td>Safety Boundaries</td>
-  <td>Built-in guardrails for agent actions</td>
-</tr>
-<tr>
-  <td>Action Composition</td>
-  <td>Chain multiple agent actions safely</td>
-</tr>
-<tr>
-  <td>State Management</td>
-  <td>Track and manage agent state</td>
-</tr>
+### Core DSL Methods
 
-<tr><td colspan="3">&nbsp;</td></tr>
+- `step` – register a dependency service
+- `params` – validate/transform incoming parameters
+- `on_success` – handle successful operation results
+- `on_failure` – map and handle failure results
 
-<tr>
-  <td rowspan="4"><b>AI Development Acceleration</b></td>
-  <td>Structured Patterns</td>
-  <td>Clear patterns for AI tools to understand</td>
-</tr>
-<tr>
-  <td>Predictable Flow</td>
-  <td>Consistent operation structure</td>
-</tr>
-<tr>
-  <td>Self-Documenting</td>
-  <td>Clear step definitions aid AI comprehension</td>
-</tr>
-<tr>
-  <td>Context Awareness</td>
-  <td>Easy access to operation context</td>
-</tr>
+### Extended Configuration
 
-<tr><td colspan="3">&nbsp;</td></tr>
+> **See:** [hati-command](https://github.com/hackico-ai/ruby-hati-command) for all configuration options
 
-<tr>
-  <td rowspan="4"><b>Traditional Strengths</b></td>
-  <td>Service Orchestration</td>
-  <td>Compose complex business operations</td>
-</tr>
-<tr>
-  <td>Error Handling</td>
-  <td>Sophisticated failure management</td>
-</tr>
-<tr>
-  <td>Dependency Injection</td>
-  <td>Flexible service composition</td>
-</tr>
-<tr>
-  <td>Transaction Safety</td>
-  <td>Atomic operation guarantees</td>
-</tr>
-</table>
+- `ar_transaction` – execute inside database transaction
+- `fail_fast` – configure fail-fast behavior
+- `failure` – set default failure handling
+- `unexpected_err` – configure generic error behavior
 
-## Advanced Usage
+## Dependency Injection
 
-### Agent Tool Integration
+At runtime you can swap out any step for testing, feature-flags, or different environments:
 
 ```ruby
-class Agent::Tool::DatabaseQuery < HatiOperation::Base
-  # Register tool capabilities
-  tool_capability :query_database
-  tool_safety_level :read_only
+result = Withdrawal::Operation::Create.call(params) do
+  step broadcast: DummyBroadcastService
+  step transfer:  StubbedPaymentProcessor
+end
+```
 
+## Alternative DSL Styles
+
+### Declarative Style
+
+Prefer more declarative code? Use the class-level DSL:
+
+```ruby
+class Withdrawal::Operation::Create < ApiOperation
+  params CreateContract, err: ApiErr.call(422)
+
+  ar_transaction :funds_transfer_transaction!
+
+  step withdrawal: WithdrawalService, err: ApiErr.call(409)
+  step transfer: ProcessTransferService, err: ApiErr.call(503)
+  step broadcast: Broadcast
+
+  on_success SerializerService.call(Transfer, status: 201)
+  on_failure ApiErrorSerializer
+
+  # requires :params keyword to access overwritten params
+  # same as params = step CreateContract.call(params), err: ApiErr.call(422)
   def call(params:)
-    query = step QueryValidator.call(params[:query])
-    result = step SafeQueryExecutor.call(query)
-    Success(result)
+    transfer = step funds_transfer_transaction!(params[:account_id])
+    broadcast.new.stream(transfer.to_event)
+    transfer.meta
+  end
+
+  def funds_transfer_transaction!(acc_id)
+    acc = step(err: ApiErr.call(404)) { User.find(id) }
+
+    withdrawal = step withdrawal.call(acc)
+    transfer = step transfer.call(withdrawal)
+    Success(transfer)
+  end
+end
+
+class Api::V2::WithdrawalController < ApiController
+  def create
+    run_and_render Withdrawal::Operation::Create
+  end
+
+  private
+
+  def run_and_render(operation, &block)
+   render JsonResult.prepare operation.call(params.to_unsafe_h).value
   end
 end
 ```
 
-### AI Assistant Integration
+### Full-Stack DI Example
 
 ```ruby
-class Assistant::Operation::CodeReview < HatiOperation::Base
-  # Structured for AI assistant comprehension
-  step analyzer: CodeAnalyzer
-  step reviewer: CodeReviewer
-  step formatter: ReviewFormatter
-
-  def call(params:)
-    analysis = step analyzer.call(params[:code])
-    review = step reviewer.call(analysis)
-    formatted = step formatter.call(review)
-
-    Success(formatted)
+class Api::V2::WithdrawalController < ApplicationController
+  def create
+    run_and_render Withdrawal::Operation::Create.call(params.to_unsafe_h) do
+      step broadcast: API::V2::BroadcastService
+      step transfer:  API::V2::PaymentProcessorService
+      step serializer: ExtendedTransferSerializer
+    end
   end
 end
 ```
-
-## Development Workflow Integration
-
-### With Cursor
-
-- Clear operation structure helps Cursor understand code context
-- Consistent patterns improve code completion quality
-- Structured error handling aids debugging suggestions
-
-### With GitHub Copilot
-
-- Predictable operation flow improves suggestions
-- Clear step definitions enhance code generation
-- Consistent patterns aid in test generation
-
-### With Autonomous Agents
-
-- Built-in tool registration system
-- Safety-first execution patterns
-- Clear state management
 
 ## Testing
 
-Comprehensive testing support for all operation types:
+Run the test-suite with:
 
-```ruby
-RSpec.describe Agent::Operation::ExecuteAction do
-  it "safely executes agent actions" do
-    result = described_class.call(instruction: "query users") do
-      # Mock agent tools
-      step executor: SafeExecutorStub
-      step analyzer: ActionAnalyzerStub
-    end
-
-    expect(result).to be_success
-  end
-end
+```bash
+bundle exec rspec
 ```
+
+HatiOperation is fully covered by RSpec. See `spec/` for reference examples including stubbed services and DI.
 
 ## Authors
 
