@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.email   = %w[giy.mariya@gmail.com]
   spec.license = 'MIT'
 
-  spec.summary     = 'A Ruby gem for building agentic-ready operations that seamlessly integrate traditional services and AI capabilities.'
+  spec.summary     = 'Ruby gem designed to seamlessly merge classic services with AI intelligence, enabling developers to build autonomous, agentic-ready operations that think, act, and integrate with ease.'
   spec.description = 'Modern service orchestration framework designed for the AI era. Enables rapid development of both traditional and AI-powered applications through composable, testable operations. Features agent-oriented architecture, AI-friendly patterns, and robust service composition.'
   spec.homepage    = "https://github.com/hackico-ai/#{spec.name}"
 
